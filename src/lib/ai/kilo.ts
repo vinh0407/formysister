@@ -28,8 +28,14 @@ export function kiloBaseUrl(): string {
   return process.env.KILO_BASE_URL || 'https://ai-gateway.kilo.ai/api/v1'
 }
 
+export const FAST_FREE_MODELS = [
+  'kilo-auto/free',
+  'nvidia/nemotron-3.5-lightning:free',
+  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+] as const
+
 export function kiloTextModel(): string {
-  return process.env.KILO_TEXT_MODEL || 'nvidia/nemotron-3.5-lightning:free'
+  return process.env.KILO_TEXT_MODEL || 'kilo-auto/free'
 }
 
 export function kiloVisionModel(): string {
@@ -42,6 +48,15 @@ export function isKiloConfigured(): boolean {
 
 export class KiloAIProvider implements AIProvider {
   readonly name = 'cloudflare-workers-ai' as const
+  private customModel?: string
+
+  constructor(model?: string) {
+    this.customModel = model
+  }
+
+  private getActiveModel(): string {
+    return this.customModel || kiloTextModel()
+  }
 
   private async chat(options: {
     model: string
@@ -137,8 +152,9 @@ export class KiloAIProvider implements AIProvider {
           contentType: input.contentType,
         })
 
+    const model = this.getActiveModel()
     const raw = await this.chat({
-      model: kiloTextModel(),
+      model,
       messages: [
         { role: 'system', content: buildQuizSystemPrompt() },
         { role: 'user', content: userPrompt },
@@ -149,12 +165,13 @@ export class KiloAIProvider implements AIProvider {
       signal: input.signal,
     })
 
-    return { raw, model: kiloTextModel() }
+    return { raw, model }
   }
 
   async regenerateQuestion(input: RegenerateQuestionInput): Promise<QuizGenerationOutput> {
+    const model = this.getActiveModel()
     const raw = await this.chat({
-      model: kiloTextModel(),
+      model,
       messages: [
         { role: 'system', content: buildQuizSystemPrompt() },
         {
@@ -173,7 +190,7 @@ export class KiloAIProvider implements AIProvider {
       signal: input.signal,
     })
 
-    return { raw, model: kiloTextModel() }
+    return { raw, model }
   }
 
   async analyzeImage(input: AnalyzeImageInput): Promise<QuizGenerationOutput> {
@@ -197,8 +214,9 @@ export class KiloAIProvider implements AIProvider {
   }
 
   async analyzeText(input: AnalyzeTextInput): Promise<QuizGenerationOutput> {
+    const model = this.getActiveModel()
     const raw = await this.chat({
-      model: kiloTextModel(),
+      model,
       messages: [
         { role: 'system', content: input.prompt },
         { role: 'user', content: input.text },
@@ -208,13 +226,14 @@ export class KiloAIProvider implements AIProvider {
       signal: input.signal,
     })
 
-    return { raw, model: kiloTextModel() }
+    return { raw, model }
   }
 
   async healthCheck(): Promise<HealthCheckOutput> {
+    const model = this.getActiveModel()
     try {
       const response = await this.chat({
-        model: kiloTextModel(),
+        model,
         messages: [{ role: 'user', content: 'ping' }],
         maxTokens: 10,
       })

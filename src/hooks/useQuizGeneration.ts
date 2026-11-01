@@ -14,7 +14,7 @@ export type GenerationPayload = {
   mode: StudyMode
   difficulty?: 'easy' | 'medium' | 'hard'
   contentType?: 'lesson' | 'existing-questions'
-  provider?: 'kilo' | 'cloudflare'
+  provider?: string
   turnstileToken?: string | null
 }
 

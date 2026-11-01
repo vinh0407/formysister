@@ -25,9 +25,9 @@ export function getAIProvider(preferred?: 'kilo' | 'cloudflare' | string): AIPro
     return cloudflareInstance
   }
 
-  if (preferred === 'kilo') {
-    if (!kiloInstance) kiloInstance = new KiloAIProvider()
-    return kiloInstance
+  if (preferred?.startsWith('kilo:') || preferred === 'kilo') {
+    const specificModel = preferred.startsWith('kilo:') ? preferred.slice(5) : undefined
+    return new KiloAIProvider(specificModel)
   }
 
   // Ưu tiên Kilo (NVIDIA Nemotron siêu nhanh & free) nếu có cấu hình

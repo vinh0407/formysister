@@ -46,6 +46,37 @@ function formatSize(bytes: number): string {
   return `${(bytes / MB).toFixed(2)} MB`
 }
 
+const AI_MODEL_OPTIONS = [
+  {
+    id: 'kilo:kilo-auto/free',
+    name: 'Kilo Auto Free',
+    badge: 'Nhanh nhất (~1s)',
+    desc: 'Tự động chọn model free nhanh nhất',
+    icon: 'spark' as const,
+  },
+  {
+    id: 'kilo:nvidia/nemotron-3.5-lightning:free',
+    name: 'NVIDIA Nemotron 3.5',
+    badge: 'Lightning (~3s)',
+    desc: 'Bản free chuyên dụng của NVIDIA',
+    icon: 'spark' as const,
+  },
+  {
+    id: 'kilo:nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+    name: 'Nemotron Nano Reasoning',
+    badge: 'Nano 30B (~1.5s)',
+    desc: 'Tư duy logic & giải thích sâu',
+    icon: 'spark' as const,
+  },
+  {
+    id: 'cloudflare',
+    name: 'Cloudflare Workers AI',
+    badge: 'Qwen 3.8 27B',
+    desc: 'Mô hình lớn 27B của Alibaba',
+    icon: 'brain' as const,
+  },
+]
+
 export function UploadPanel({
   loading,
   stageLabel,
@@ -70,7 +101,7 @@ export function UploadPanel({
   const [isCustomCount, setIsCustomCount] = useState(false)
   const [customInput, setCustomInput] = useState('')
   const [contentType, setContentType] = useState<'lesson' | 'existing-questions'>('lesson')
-  const [aiAgent, setAiAgent] = useState<'kilo' | 'cloudflare'>('kilo')
+  const [aiAgent, setAiAgent] = useState<string>('kilo:kilo-auto/free')
   const [essayCount, setEssayCount] = useState(2)
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [mode, setMode] = useState<StudyMode>('learn')
@@ -459,43 +490,43 @@ export function UploadPanel({
           <div>
             <label className="mb-2 flex items-center justify-between text-sm font-bold text-slate-700">
               <span>Mô hình AI xử lý</span>
-              <span className="text-xs font-semibold text-emerald-600">⚡ Ưu tiên tốc độ</span>
+              <span className="text-xs font-semibold text-emerald-600">⚡ Ưu tiên Free & Siêu nhanh</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setAiAgent('kilo')}
-                className={`flex items-start gap-2.5 rounded-xl border p-2.5 text-left transition ${
-                  aiAgent === 'kilo'
-                    ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-200 shadow-xs'
-                    : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
-                }`}
-              >
-                <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
-                  <Icon name="spark" className="size-3.5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-slate-900">Kilo: NVIDIA Nemotron</p>
-                  <p className="text-[11px] text-emerald-700 font-medium">Bản Free · Siêu nhanh (~5s)</p>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setAiAgent('cloudflare')}
-                className={`flex items-start gap-2.5 rounded-xl border p-2.5 text-left transition ${
-                  aiAgent === 'cloudflare'
-                    ? 'border-brand-500 bg-brand-50/70 ring-2 ring-brand-200 shadow-xs'
-                    : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
-                }`}
-              >
-                <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
-                  <Icon name="brain" className="size-3.5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-slate-900">Cloudflare Workers AI</p>
-                  <p className="text-[11px] text-slate-500 font-medium">Qwen 3.8 27B</p>
-                </div>
-              </button>
+              {AI_MODEL_OPTIONS.map((item) => {
+                const isSelected = aiAgent === item.id
+                return (
+                  <button
+                    type="button"
+                    key={item.id}
+                    onClick={() => setAiAgent(item.id)}
+                    className={`flex items-start gap-2.5 rounded-xl border p-2.5 text-left transition ${
+                      isSelected
+                        ? 'border-emerald-500 bg-emerald-50/80 ring-2 ring-emerald-200 shadow-xs'
+                        : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
+                    }`}
+                  >
+                    <div
+                      className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg ${
+                        isSelected
+                          ? 'bg-emerald-200 text-emerald-800'
+                          : 'bg-slate-200/70 text-slate-600'
+                      }`}
+                    >
+                      <Icon name={item.icon} className="size-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-bold text-slate-900">{item.name}</span>
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                          {item.badge}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 truncate">{item.desc}</p>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>
