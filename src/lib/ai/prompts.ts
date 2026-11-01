@@ -30,18 +30,18 @@ export function buildQuizUserPrompt(options: {
 
   if (contentType === 'existing-questions') {
     return `Tài liệu dưới đây là DANH SÁCH CÂU HỎI CÓ SẴN do người học cung cấp.
-NHIỆM VỤ CHÍNH CỦA BẠN:
-1. Đọc và bóc tách CHÍNH XÁC toàn bộ các câu hỏi cùng các phương án lựa chọn (A, B, C, D) từ danh sách dưới đây. KHÔNG TỰ BỊA THÊM CÂU HỎI NGOÀI DANH SÁCH.
-2. Với mỗi câu hỏi:
-   - Giữ nguyên nội dung câu hỏi và các phương án lựa chọn.
+NHIỆM VỤ BẮT BUỘC:
+1. Bạn phải giải ĐẦY ĐỦ TẤT CẢ CÁC CÂU HỎI có trong danh sách dưới đây từ câu đầu tiên đến câu cuối cùng. TUYỆT ĐỐI KHÔNG ĐƯỢC BỎ SÓT BẤT KỲ CÂU NÀO và KHÔNG TỰ BỊA THÊM CÂU NGOÀI DANH SÁCH.
+2. Với từng câu hỏi trong danh sách:
+   - Giữ nguyên nội dung câu hỏi và tất cả các phương án lựa chọn (A, B, C, D).
    - Vận dụng kiến thức chuẩn xác để tìm và xác định phương án đúng tuyệt đối, đưa NGUYÊN VĂN nội dung phương án đó vào trường "answer".
    - Viết lời giải thích chi tiết, sư phạm vào trường "explanation" nêu rõ vì sao đáp án đó đúng và lỗi sai của các phương án còn lại nếu có.
    - Gán độ khó phù hợp cho từng câu (easy, medium, hard).
-3. Đặt ID duy nhất, liên tiếp: q1, q2, ...
-4. Trả về đúng đối tượng JSON hợp lệ theo cấu trúc bên dưới (không có markdown, không có lời bình).
+3. Đặt ID duy nhất, liên tiếp: q1, q2, ... theo đúng thứ tự xuất hiện của câu hỏi trong danh sách.
+4. Trả về đúng đối tượng JSON hợp lệ theo cấu trúc bên dưới (không có markdown, không có lời bình ngoài JSON).
 
 CẤU TRÚC JSON:
-{"title":"Tên bộ câu hỏi trắc nghiệm","summary":"Bộ câu hỏi trắc nghiệm kèm đáp án và giải thích chi tiết","questions":[{"id":"q1","type":"multiple-choice","question":"Câu 1. [Nội dung câu hỏi]","options":["Lựa chọn A","Lựa chọn B","Lựa chọn C","Lựa chọn D"],"answer":"Nội dung phương án đúng","explanation":"Giải thích chi tiết vì sao đúng","difficulty":"easy|medium|hard"}]}
+{"title":"Tên bộ câu hỏi trắc nghiệm","summary":"Bộ câu hỏi trắc nghiệm kèm đáp án và giải thích chi tiết toàn bộ câu hỏi","questions":[{"id":"q1","type":"multiple-choice","question":"Câu 1. [Nội dung câu hỏi]","options":["Lựa chọn A","Lựa chọn B","Lựa chọn C","Lựa chọn D"],"answer":"Nội dung phương án đúng","explanation":"Giải thích chi tiết vì sao đúng","difficulty":"easy|medium|hard"}]}
 
 <DanhSachCauHoiCoSan>
 ${truncateSource(text)}

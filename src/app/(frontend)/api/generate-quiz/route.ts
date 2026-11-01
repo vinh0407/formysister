@@ -94,9 +94,9 @@ export async function POST(request: Request) {
     const inputContentType: 'lesson' | 'existing-questions' =
       form.get('contentType') === 'existing-questions' ? 'existing-questions' : 'lesson'
     const isExisting = inputContentType === 'existing-questions'
-    const objectiveCount = clampInt(form.get('questionCount'), 1, 50, isExisting ? 50 : 10)
+    const objectiveCount = isExisting ? 0 : clampInt(form.get('questionCount'), 1, 50, 10)
     const essayCount = isExisting ? 0 : clampInt(form.get('essayCount'), 0, 10, 2)
-    if (objectiveCount + essayCount > 60) {
+    if (!isExisting && objectiveCount + essayCount > 60) {
       return fail('Tổng số câu hỏi không được vượt quá 60.', 400)
     }
 

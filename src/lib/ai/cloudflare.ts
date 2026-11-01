@@ -296,10 +296,13 @@ export class CloudflareAIProvider implements AIProvider {
       },
     ]
 
-    const maxTokens = Math.min(
-      12000,
-      Math.max(3200, input.objectiveCount * 220 + input.essayCount * 450 + 900),
-    )
+    const maxTokens =
+      input.contentType === 'existing-questions'
+        ? 14000
+        : Math.min(
+            12000,
+            Math.max(3200, input.objectiveCount * 220 + input.essayCount * 450 + 900),
+          )
 
     return this.chat({
       model: textModel(),
