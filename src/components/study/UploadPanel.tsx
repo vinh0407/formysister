@@ -69,6 +69,7 @@ export function UploadPanel({
   const [questionCount, setQuestionCount] = useState(10)
   const [isCustomCount, setIsCustomCount] = useState(false)
   const [customInput, setCustomInput] = useState('')
+  const [contentType, setContentType] = useState<'lesson' | 'existing-questions'>('lesson')
   const [essayCount, setEssayCount] = useState(2)
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [mode, setMode] = useState<StudyMode>('learn')
@@ -126,9 +127,10 @@ export function UploadPanel({
       file,
       sourceText,
       questionCount,
-      essayCount,
+      essayCount: contentType === 'existing-questions' ? 0 : essayCount,
       mode,
       difficulty,
+      contentType,
       turnstileToken: token,
     })
   }
@@ -153,20 +155,76 @@ export function UploadPanel({
       </div>
 
       <div className="block">
-        <label
-          htmlFor="study-source-text"
-          className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-700"
-        >
-          <Icon name="message" className="size-4 text-brand-600" />
-          Nội dung bài học
-        </label>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <label
+            htmlFor="study-source-text"
+            className="flex items-center gap-2 text-sm font-bold text-slate-700"
+          >
+            <Icon
+              name={contentType === 'existing-questions' ? 'list' : 'book'}
+              className="size-4 text-brand-600"
+            />
+            {contentType === 'existing-questions' ? 'Danh sách câu hỏi có sẵn' : 'Nội dung bài học'}
+          </label>
+          <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1">
+            <button
+              type="button"
+              onClick={() => setContentType('lesson')}
+              aria-pressed={contentType === 'lesson'}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                contentType === 'lesson'
+                  ? 'bg-white text-brand-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Icon name="book" className="size-3.5" />
+              Tự tạo từ bài học
+            </button>
+            <button
+              type="button"
+              onClick={() => setContentType('existing-questions')}
+              aria-pressed={contentType === 'existing-questions'}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                contentType === 'existing-questions'
+                  ? 'bg-white text-brand-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Icon name="list" className="size-3.5" />
+              List câu hỏi có sẵn
+            </button>
+          </div>
+        </div>
+
+        {contentType === 'existing-questions' ? (
+          <div className="mb-3 flex items-start gap-2.5 rounded-2xl border border-amber-200 bg-amber-50/70 p-3 text-xs leading-5 text-amber-900">
+            <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-amber-200/70 text-amber-800">
+              <Icon name="info" className="size-3.5" />
+            </div>
+            <div>
+              <p className="font-bold">Chế độ giải đề tự động:</p>
+              <p className="text-amber-800/90">
+                Dán danh sách câu hỏi đã có (dạng: Câu 1, Câu 2... A, B, C, D). AI sẽ tự động đọc,
+                giữ nguyên câu hỏi và <strong>tìm đáp án đúng kèm lời giải thích chi tiết</strong> mà
+                không tạo thêm câu hỏi ngoài danh sách.
+              </p>
+            </div>
+          </div>
+        ) : null}
+
         <textarea
           id="study-source-text"
           value={sourceText}
           onChange={(event) => setSourceText(event.target.value)}
           maxLength={80_000}
-          placeholder="Dán đoạn bài học, ghi chú hoặc nội dung bạn muốn AI tạo câu hỏi…"
-          className="min-h-36 w-full resize-y rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-ink outline-none transition placeholder:text-slate-500 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100"
+          placeholder={
+            contentType === 'existing-questions'
+              ? 'Dán danh sách câu hỏi có sẵn tại đây...\n\nVí dụ:\nCâu 1. Hội nghị Ianta diễn ra vào năm nào?\nA. 1943       B. 1944\nC. 1945       D. 1946\n\nCâu 2. Trụ sở Liên hợp quốc đặt tại đâu?\nA. Luân Đôn   B. Niu Oóc\nC. Pa-ri      D. Giơ-ne-vơ\n\n(AI sẽ nhận diện và đưa ra đáp án đúng kèm giải thích)'
+              : 'Dán đoạn bài học, ghi chú hoặc nội dung ôn tập bạn muốn AI tự động tạo câu hỏi…'
+          }
+          className={`min-h-36 w-full resize-y rounded-2xl border border-slate-200 bg-slate-50 p-4 leading-6 text-ink outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100 ${
+            contentType === 'existing-questions' ? 'font-mono text-xs sm:text-sm' : 'text-sm'
+          }`}
           aria-describedby="study-source-help"
         />
         <div className="mt-1.5 flex items-center justify-between gap-3">
@@ -265,7 +323,11 @@ export function UploadPanel({
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <fieldset>
           <div className="mb-2 flex items-center justify-between">
-            <legend className="text-sm font-bold text-slate-700">Số câu trắc nghiệm</legend>
+            <legend className="text-sm font-bold text-slate-700">
+              {contentType === 'existing-questions'
+                ? 'Giới hạn số câu giải'
+                : 'Số câu trắc nghiệm'}
+            </legend>
             <span className="text-xs font-semibold text-slate-500">Tối đa 50 câu</span>
           </div>
           <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
@@ -340,26 +402,40 @@ export function UploadPanel({
           </div>
         </fieldset>
 
-        <fieldset>
-          <legend className="mb-2 text-sm font-bold text-slate-700">Số câu tự luận</legend>
-          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
-            {[0, 2, 5].map((count) => (
-              <button
-                type="button"
-                key={count}
-                onClick={() => setEssayCount(count)}
-                aria-pressed={essayCount === count}
-                className={`flex-1 rounded-lg py-2 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 ${
-                  essayCount === count
-                    ? 'bg-white text-brand-700 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {count}
-              </button>
-            ))}
+        {contentType === 'lesson' ? (
+          <fieldset>
+            <legend className="mb-2 text-sm font-bold text-slate-700">Số câu tự luận</legend>
+            <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
+              {[0, 2, 5].map((count) => (
+                <button
+                  type="button"
+                  key={count}
+                  onClick={() => setEssayCount(count)}
+                  aria-pressed={essayCount === count}
+                  className={`flex-1 rounded-lg py-2 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 ${
+                    essayCount === count
+                      ? 'bg-white text-brand-700 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {count}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        ) : (
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-xs">
+              <Icon name="check" className="size-4" />
+            </div>
+            <div className="text-xs">
+              <p className="font-bold text-slate-800">Chế độ giải danh sách câu hỏi</p>
+              <p className="text-slate-500">
+                AI sẽ tìm đáp án chính xác và viết lời giải chi tiết cho từng câu trong danh sách.
+              </p>
+            </div>
           </div>
-        </fieldset>
+        )}
       </div>
 
       <div className="mt-5 grid gap-5 sm:grid-cols-2">

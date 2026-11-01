@@ -24,18 +24,35 @@ export function buildQuizUserPrompt(options: {
   objectiveCount: number
   essayCount: number
   difficulty?: string
+  contentType?: 'lesson' | 'existing-questions'
 }): string {
-  const { text, objectiveCount, essayCount, difficulty = 'medium' } = options
+  const { text, objectiveCount, essayCount, difficulty = 'medium', contentType = 'lesson' } = options
+
+  if (contentType === 'existing-questions') {
+    return `Tài liệu dưới đây là DANH SÁCH CÂU HỎI CÓ SẴN do người học cung cấp.
+NHIỆM VỤ CHÍNH CỦA BẠN:
+1. Đọc và bóc tách CHÍNH XÁC toàn bộ các câu hỏi cùng các phương án lựa chọn (A, B, C, D) từ danh sách dưới đây. KHÔNG TỰ BỊA THÊM CÂU HỎI NGOÀI DANH SÁCH.
+2. Với mỗi câu hỏi:
+   - Giữ nguyên nội dung câu hỏi và các phương án lựa chọn.
+   - Vận dụng kiến thức chuẩn xác để tìm và xác định phương án đúng tuyệt đối, đưa NGUYÊN VĂN nội dung phương án đó vào trường "answer".
+   - Viết lời giải thích chi tiết, sư phạm vào trường "explanation" nêu rõ vì sao đáp án đó đúng và lỗi sai của các phương án còn lại nếu có.
+   - Gán độ khó phù hợp cho từng câu (easy, medium, hard).
+3. Đặt ID duy nhất, liên tiếp: q1, q2, ...
+4. Trả về đúng đối tượng JSON hợp lệ theo cấu trúc bên dưới (không có markdown, không có lời bình).
+
+CẤU TRÚC JSON:
+{"title":"Tên bộ câu hỏi trắc nghiệm","summary":"Bộ câu hỏi trắc nghiệm kèm đáp án và giải thích chi tiết","questions":[{"id":"q1","type":"multiple-choice","question":"Câu 1. [Nội dung câu hỏi]","options":["Lựa chọn A","Lựa chọn B","Lựa chọn C","Lựa chọn D"],"answer":"Nội dung phương án đúng","explanation":"Giải thích chi tiết vì sao đúng","difficulty":"easy|medium|hard"}]}
+
+<DanhSachCauHoiCoSan>
+${truncateSource(text)}
+</DanhSachCauHoiCoSan>`
+  }
+
   return `Đọc, phân tích tài liệu và soạn bài kiểm tra tiếng Việt theo cấu trúc chuẩn.
 
 QUY TẮC XỬ LÝ TÀI LIỆU VÀ CÂU HỎI:
-1. NẾU TÀI LIỆU ĐÃ CÓ SẴN CÂU HỎI (dạng "Câu 1. ... A. ... B. ... C. ... D. ..."):
-   - Nhận diện và bóc tách chính xác từng câu hỏi cùng 4 phương án A, B, C, D.
-   - Vận dụng kiến thức chuẩn xác để xác định đáp án đúng cho từng câu.
-   - Viết phần "explanation" phân tích rõ tại sao đáp án đó đúng, căn cứ vào sự kiện/khái niệm nào.
-2. NẾU TÀI LIỆU LÀ VĂN BẢN/BÀI HỌC:
-   - Soạn câu hỏi bám sát chuẩn đề thi trắc nghiệm Việt Nam.
-   - Mỗi câu trắc nghiệm có đúng 4 lựa chọn cân xứng về độ dài, tính nhiễu tốt, một đáp án đúng duy nhất.
+- Soạn câu hỏi bám sát chuẩn đề thi trắc nghiệm Việt Nam.
+- Mỗi câu trắc nghiệm có đúng 4 lựa chọn cân xứng về độ dài, tính nhiễu tốt, một đáp án đúng duy nhất.
 
 YÊU CẦU BẮT BUỘC:
 - Số lượng: đúng ${objectiveCount} câu trắc nghiệm và đúng ${essayCount} câu tự luận.
@@ -59,7 +76,20 @@ export function buildQuizRepairPrompt(options: {
   error: string
   objectiveCount: number
   essayCount: number
+  contentType?: 'lesson' | 'existing-questions'
 }): string {
+  if (options.contentType === 'existing-questions') {
+    return `Phản hồi trước của bạn không vượt qua kiểm tra JSON. Hãy sửa và trả về DUY NHẤT JSON hợp lệ.
+Lỗi: ${options.error.slice(0, 600)}
+Yêu cầu: Bóc tách chính xác các câu hỏi từ danh sách người dùng, giữ nguyên các lựa chọn, "answer" phải trùng nguyên văn một lựa chọn, kèm giải thích chi tiết.
+${SAFETY_RULES}
+
+Phản hồi cũ:
+${options.raw.slice(0, 12_000)}
+
+Chỉ trả về JSON đã sửa.`
+  }
+
   return `Phản hồi trước của bạn không vượt qua kiểm tra. Hãy sửa và trả về DUY NHẤT JSON hợp lệ.
 Lỗi: ${options.error.slice(0, 600)}
 Yêu cầu: đúng ${options.objectiveCount} câu trắc nghiệm, đúng ${options.essayCount} câu tự luận, ID duy nhất, đáp án trắc nghiệm phải trùng nguyên văn một lựa chọn.

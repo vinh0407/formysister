@@ -27,6 +27,7 @@ export type QuizGenerationInput = {
   objectiveCount: number
   essayCount: number
   difficulty?: QuestionDifficulty
+  contentType?: 'lesson' | 'existing-questions'
   repair?: { raw: string; error: string }
   signal?: AbortSignal
 }
@@ -283,12 +284,14 @@ export class CloudflareAIProvider implements AIProvider {
               error: input.repair.error,
               objectiveCount: input.objectiveCount,
               essayCount: input.essayCount,
+              contentType: input.contentType,
             })
           : buildQuizUserPrompt({
               text: input.text,
               objectiveCount: input.objectiveCount,
               essayCount: input.essayCount,
               difficulty: input.difficulty,
+              contentType: input.contentType,
             }),
       },
     ]

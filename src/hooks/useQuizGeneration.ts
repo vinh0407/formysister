@@ -13,6 +13,7 @@ export type GenerationPayload = {
   essayCount: number
   mode: StudyMode
   difficulty?: 'easy' | 'medium' | 'hard'
+  contentType?: 'lesson' | 'existing-questions'
   turnstileToken?: string | null
 }
 
@@ -74,6 +75,7 @@ export function useQuizGeneration() {
         body.append('essayCount', String(payload.essayCount))
         body.append('mode', payload.mode)
         body.append('difficulty', payload.difficulty ?? 'medium')
+        if (payload.contentType) body.append('contentType', payload.contentType)
         if (payload.turnstileToken) body.append('turnstileToken', payload.turnstileToken)
 
         const response = await fetch('/api/quiz/generate', {

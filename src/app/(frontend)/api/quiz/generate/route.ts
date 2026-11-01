@@ -50,8 +50,11 @@ export async function POST(request: Request) {
     const sourceText = validateSourceText(
       typeof form.get('sourceText') === 'string' ? String(form.get('sourceText')) : '',
     )
-    const objectiveCount = clampInt(form.get('questionCount'), 1, 50, 10)
-    const essayCount = clampInt(form.get('essayCount'), 0, 10, 2)
+    const contentType: 'lesson' | 'existing-questions' =
+      form.get('contentType') === 'existing-questions' ? 'existing-questions' : 'lesson'
+    const isExisting = contentType === 'existing-questions'
+    const objectiveCount = clampInt(form.get('questionCount'), 1, 50, isExisting ? 50 : 10)
+    const essayCount = isExisting ? 0 : clampInt(form.get('essayCount'), 0, 10, 2)
     if (objectiveCount + essayCount > 60) {
       return fail('Tổng số câu hỏi không được vượt quá 60.', 400)
     }
@@ -85,12 +88,17 @@ export async function POST(request: Request) {
       objectiveCount,
       essayCount,
       difficulty,
+      contentType,
       signal: request.signal,
     })
 
     let quiz
     try {
-      quiz = parseQuizResponse(generation.raw, { objectiveCount, essayCount })
+      quiz = parseQuizResponse(generation.raw, {
+        objectiveCount,
+        essayCount,
+        exactCount: !isExisting,
+      })
     } catch (error) {
       if (!(error instanceof QuizValidationError)) throw error
       const repaired = await provider.generateQuiz({
@@ -98,10 +106,15 @@ export async function POST(request: Request) {
         objectiveCount,
         essayCount,
         difficulty,
+        contentType,
         repair: { raw: generation.raw, error: error.message },
         signal: request.signal,
       })
-      quiz = parseQuizResponse(repaired.raw, { objectiveCount, essayCount })
+      quiz = parseQuizResponse(repaired.raw, {
+        objectiveCount,
+        essayCount,
+        exactCount: !isExisting,
+      })
     }
 
     const quizId = saveQuiz(quiz, mode, combined)

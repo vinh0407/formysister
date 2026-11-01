@@ -189,7 +189,7 @@ export function extractJsonObject(raw: string): unknown {
 
 export function normalizeQuiz(
   raw: unknown,
-  expected: { objectiveCount: number; essayCount: number },
+  expected: { objectiveCount: number; essayCount: number; exactCount?: boolean },
 ): InternalQuiz {
   const parsed = topLevelSchema.safeParse(raw)
   if (!parsed.success) {
@@ -197,6 +197,21 @@ export function normalizeQuiz(
   }
 
   const questions = parsed.data.questions.map((question, index) => normalizeQuestion(question, index))
+
+  if (expected.exactCount === false) {
+    if (questions.length === 0) {
+      throw new QuizValidationError('Không tìm thấy câu hỏi hợp lệ nào trong danh sách.')
+    }
+    const renumbered = questions.map((question, index) => ({ ...question, id: `q${index + 1}` }))
+    return {
+      title: normalizeText(parsed.data.title ?? '').slice(0, 200) || 'Bộ câu hỏi trắc nghiệm',
+      summary:
+        normalizeText(parsed.data.summary ?? '').slice(0, 1000) ||
+        'Bộ câu hỏi trắc nghiệm kèm đáp án và giải thích chi tiết.',
+      difficulty: normalizeDifficulty(parsed.data.difficulty),
+      questions: renumbered,
+    }
+  }
 
   const kept: InternalQuizQuestion[] = []
   let objective = 0
@@ -237,7 +252,7 @@ export function normalizeQuiz(
 
 export function parseQuizResponse(
   raw: string,
-  expected: { objectiveCount: number; essayCount: number },
+  expected: { objectiveCount: number; essayCount: number; exactCount?: boolean },
 ): InternalQuiz {
   return normalizeQuiz(extractJsonObject(raw), expected)
 }
