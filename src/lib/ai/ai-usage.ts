@@ -53,7 +53,10 @@ export function todayKey(): string {
 }
 
 export function isAIConfigured(): boolean {
-  return Boolean(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN)
+  return Boolean(
+    process.env.KILO_API_KEY ||
+      Boolean(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN),
+  )
 }
 
 export async function getTodayNeurons(): Promise<number> {

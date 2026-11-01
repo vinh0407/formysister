@@ -70,6 +70,7 @@ export function UploadPanel({
   const [isCustomCount, setIsCustomCount] = useState(false)
   const [customInput, setCustomInput] = useState('')
   const [contentType, setContentType] = useState<'lesson' | 'existing-questions'>('lesson')
+  const [aiAgent, setAiAgent] = useState<'kilo' | 'cloudflare'>('kilo')
   const [essayCount, setEssayCount] = useState(2)
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [mode, setMode] = useState<StudyMode>('learn')
@@ -129,8 +130,9 @@ export function UploadPanel({
       questionCount,
       essayCount: contentType === 'existing-questions' ? 0 : essayCount,
       mode,
-      difficulty,
+      difficulty: contentType === 'existing-questions' ? 'medium' : difficulty,
       contentType,
+      provider: aiAgent,
       turnstileToken: token,
     })
   }
@@ -434,35 +436,83 @@ export function UploadPanel({
         </div>
       )}
 
-      <div className="mt-5 grid gap-5 sm:grid-cols-2">
-        <div>
-          <label htmlFor="study-difficulty" className="mb-2 block text-sm font-bold text-slate-700">
-            Độ khó
-          </label>
-          <select
-            id="study-difficulty"
-            value={difficulty}
-            onChange={(event) => setDifficulty(event.target.value as 'easy' | 'medium' | 'hard')}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-ink outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100"
-          >
-            <option value="easy">Dễ</option>
-            <option value="medium">Trung bình</option>
-            <option value="hard">Khó</option>
-          </select>
+      <div className="mt-5 space-y-5">
+        <div className={`grid gap-5 ${contentType === 'lesson' ? 'sm:grid-cols-2' : 'grid-cols-1'}`}>
+          {contentType === 'lesson' ? (
+            <div>
+              <label htmlFor="study-difficulty" className="mb-2 block text-sm font-bold text-slate-700">
+                Độ khó
+              </label>
+              <select
+                id="study-difficulty"
+                value={difficulty}
+                onChange={(event) => setDifficulty(event.target.value as 'easy' | 'medium' | 'hard')}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-ink outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100"
+              >
+                <option value="easy">Dễ</option>
+                <option value="medium">Trung bình</option>
+                <option value="hard">Khó</option>
+              </select>
+            </div>
+          ) : null}
+
+          <div>
+            <label className="mb-2 flex items-center justify-between text-sm font-bold text-slate-700">
+              <span>Mô hình AI xử lý</span>
+              <span className="text-xs font-semibold text-emerald-600">⚡ Ưu tiên tốc độ</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setAiAgent('kilo')}
+                className={`flex items-start gap-2.5 rounded-xl border p-2.5 text-left transition ${
+                  aiAgent === 'kilo'
+                    ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-200 shadow-xs'
+                    : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
+                }`}
+              >
+                <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                  <Icon name="spark" className="size-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900">Kilo: NVIDIA Nemotron</p>
+                  <p className="text-[11px] text-emerald-700 font-medium">Bản Free · Siêu nhanh (~5s)</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAiAgent('cloudflare')}
+                className={`flex items-start gap-2.5 rounded-xl border p-2.5 text-left transition ${
+                  aiAgent === 'cloudflare'
+                    ? 'border-brand-500 bg-brand-50/70 ring-2 ring-brand-200 shadow-xs'
+                    : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
+                }`}
+              >
+                <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
+                  <Icon name="brain" className="size-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900">Cloudflare Workers AI</p>
+                  <p className="text-[11px] text-slate-500 font-medium">Qwen 3.8 27B</p>
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
+
         <fieldset>
           <legend className="mb-2 text-sm font-bold text-slate-700">Chế độ kiểm tra</legend>
-          <div className="grid gap-2">
+          <div className="grid gap-2 sm:grid-cols-2">
             {[
               {
                 value: 'learn' as const,
                 title: 'Học & sửa ngay',
-                description: 'Xem đáp án sau mỗi câu',
+                description: 'Xem đáp án và giải thích ngay sau mỗi câu',
               },
               {
                 value: 'exam' as const,
                 title: 'Kiểm tra thật',
-                description: 'Nộp bài rồi mới xem đáp án',
+                description: 'Làm xong nộp bài mới xem kết quả và đáp án',
               },
             ].map((option) => (
               <label

@@ -150,7 +150,9 @@ export async function POST(request: Request) {
     })
     materialId = String(materialDoc.id)
 
-    const provider = getAIProvider()
+    const provider = getAIProvider(
+      typeof form.get('provider') === 'string' ? String(form.get('provider')) : undefined,
+    )
     const processed = validated
       ? await processDocument(validated, provider, request.signal)
       : null

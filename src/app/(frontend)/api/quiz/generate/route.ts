@@ -69,7 +69,9 @@ export async function POST(request: Request) {
     const difficulty = difficultyOf(form.get('difficulty'))
     const validated = file ? await validateUpload(file) : null
 
-    const provider = getAIProvider()
+    const provider = getAIProvider(
+      typeof form.get('provider') === 'string' ? String(form.get('provider')) : undefined,
+    )
     const processed = validated ? await processDocument(validated, provider, request.signal) : null
 
     const combined = [

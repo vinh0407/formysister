@@ -14,6 +14,7 @@ export type GenerationPayload = {
   mode: StudyMode
   difficulty?: 'easy' | 'medium' | 'hard'
   contentType?: 'lesson' | 'existing-questions'
+  provider?: 'kilo' | 'cloudflare'
   turnstileToken?: string | null
 }
 
@@ -76,6 +77,7 @@ export function useQuizGeneration() {
         body.append('mode', payload.mode)
         body.append('difficulty', payload.difficulty ?? 'medium')
         if (payload.contentType) body.append('contentType', payload.contentType)
+        if (payload.provider) body.append('provider', payload.provider)
         if (payload.turnstileToken) body.append('turnstileToken', payload.turnstileToken)
 
         const response = await fetch('/api/quiz/generate', {
