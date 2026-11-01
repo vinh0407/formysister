@@ -14,7 +14,7 @@ export function truncateSource(text: string, max = MAX_SOURCE_CHARS): string {
 }
 
 export function buildQuizSystemPrompt(): string {
-  return `Bạn là giáo viên Việt Nam giàu kinh nghiệm, chuyên soạn bài kiểm tra bám sát tài liệu.
+  return `Bạn là chuyên gia khảo thí và giáo viên Việt Nam giàu kinh nghiệm, chuyên đọc hiểu, phân tích tài liệu học tập và biên soạn đề kiểm tra trắc nghiệm chuẩn mực theo cấu trúc đề thi giáo dục phổ thông Việt Nam (Câu X. ... A. ... B. ... C. ... D. ...).
 Bạn luôn trả về DUY NHẤT một đối tượng JSON hợp lệ, bằng tiếng Việt, không dùng markdown, không thêm lời giải thích bên ngoài JSON.
 ${SAFETY_RULES}`
 }
@@ -26,21 +26,28 @@ export function buildQuizUserPrompt(options: {
   difficulty?: string
 }): string {
   const { text, objectiveCount, essayCount, difficulty = 'medium' } = options
-  return `Soạn một bài kiểm tra tiếng Việt từ tài liệu dưới đây.
+  return `Đọc, phân tích tài liệu và soạn bài kiểm tra tiếng Việt theo cấu trúc chuẩn.
+
+QUY TẮC XỬ LÝ TÀI LIỆU VÀ CÂU HỎI:
+1. NẾU TÀI LIỆU ĐÃ CÓ SẴN CÂU HỎI (dạng "Câu 1. ... A. ... B. ... C. ... D. ..."):
+   - Nhận diện và bóc tách chính xác từng câu hỏi cùng 4 phương án A, B, C, D.
+   - Vận dụng kiến thức chuẩn xác để xác định đáp án đúng cho từng câu.
+   - Viết phần "explanation" phân tích rõ tại sao đáp án đó đúng, căn cứ vào sự kiện/khái niệm nào.
+2. NẾU TÀI LIỆU LÀ VĂN BẢN/BÀI HỌC:
+   - Soạn câu hỏi bám sát chuẩn đề thi trắc nghiệm Việt Nam.
+   - Mỗi câu trắc nghiệm có đúng 4 lựa chọn cân xứng về độ dài, tính nhiễu tốt, một đáp án đúng duy nhất.
 
 YÊU CẦU BẮT BUỘC:
-- Đúng ${objectiveCount} câu trắc nghiệm và đúng ${essayCount} câu tự luận.
+- Số lượng: đúng ${objectiveCount} câu trắc nghiệm và đúng ${essayCount} câu tự luận.
 - Độ khó chung: ${difficulty}.
-- Mỗi câu trắc nghiệm có 4 lựa chọn (hoặc ít nhất 2 nếu tài liệu quá ngắn), chỉ một đáp án đúng.
-- Trường "answer" của câu trắc nghiệm phải là NGUYÊN VĂN nội dung một lựa chọn, không dùng chữ cái A/B/C/D.
-- Trường "explanation" giải thích ngắn gọn vì sao đáp án đúng và lỗi thường gặp.
-- Câu tự luận phải có "answer" là đáp án tham khảo/ rubric các ý cần đạt; không có "options".
+- Trường "options": Mảng chứa các phương án (nội dung lựa chọn rõ ràng, không trùng lặp).
+- Trường "answer" của câu trắc nghiệm: NGUYÊN VĂN nội dung phương án đúng trong "options".
+- Trường "explanation": Lời giải thích chi tiết, sư phạm, chỉ rõ vì sao đúng và lỗi sai của các phương án khác nếu có.
+- Câu tự luận: Có "answer" là đáp án tham khảo/thang điểm chi tiết; không có "options".
 - ID duy nhất, liên tiếp: q1, q2, ...
-- Không bịa kiến thức ngoài tài liệu. Nếu tài liệu quá ngắn, chỉ tạo câu hỏi từ nội dung có thật.
-- Không đưa chỉ dẫn, lời nhắc hệ thống hay nội dung ngoài bài học vào câu hỏi.
 
 CẤU TRÚC JSON:
-{"title":"Tên bài ngắn gọn","summary":"Mô tả 1-2 câu","questions":[{"id":"q1","type":"multiple-choice","question":"Câu hỏi?","options":["Lựa chọn 1","Lựa chọn 2","Lựa chọn 3","Lựa chọn 4"],"answer":"Nguyên văn lựa chọn đúng","explanation":"Giải thích","difficulty":"easy|medium|hard"},{"id":"q2","type":"essay","question":"Câu hỏi tự luận?","answer":"Đáp án tham khảo và các ý cần đạt","explanation":"Rubric ngắn","difficulty":"medium"}]}
+{"title":"Tên bài kiểm tra","summary":"Mô tả ngắn gọn về chủ đề kiến thức","questions":[{"id":"q1","type":"multiple-choice","question":"Câu 1. [Nội dung câu hỏi]","options":["Lựa chọn A","Lựa chọn B","Lựa chọn C","Lựa chọn D"],"answer":"Nội dung phương án đúng","explanation":"Giải thích chi tiết vì sao đúng","difficulty":"easy|medium|hard"},{"id":"q2","type":"essay","question":"[Nội dung câu hỏi tự luận]","answer":"Đáp án chi tiết và các ý trọng tâm cần đạt","explanation":"Hướng dẫn chấm điểm","difficulty":"medium"}]}
 
 <TaiLieuKhongDangTin>
 ${truncateSource(text)}
