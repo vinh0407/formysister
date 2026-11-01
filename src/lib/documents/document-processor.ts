@@ -1,8 +1,6 @@
 import type { AIProvider } from '@/lib/ai/ai-provider'
 import type { ValidatedFile } from '@/lib/security/file-validation'
 import { extractDocxText } from './docx-processor'
-import { prepareImageForVision, imageToDataUrl } from './image-processor'
-import { extractPdfText, renderPdfPages } from './pdf-processor'
 import { normalizeExtractedText, truncateText } from './text-normalizer'
 
 export class DocumentProcessingError extends Error {
@@ -23,12 +21,24 @@ export type ProcessedDocument = {
 
 const STORE_LIMIT = 120_000
 
+// Lazy-load heavy modules to avoid build-time evaluation errors
+async function getImageProcessor() {
+  const mod = await import('./image-processor')
+  return { prepareImageForVision: mod.prepareImageForVision, imageToDataUrl: mod.imageToDataUrl }
+}
+
+async function getPdfProcessor() {
+  const mod = await import('./pdf-processor')
+  return { extractPdfText: mod.extractPdfText, renderPdfPages: mod.renderPdfPages }
+}
+
 export async function processDocument(
   file: ValidatedFile,
   provider: AIProvider,
   signal?: AbortSignal,
 ): Promise<ProcessedDocument> {
   if (file.category === 'image') {
+    const { prepareImageForVision, imageToDataUrl } = await getImageProcessor()
     const prepared = await prepareImageForVision(file.buffer)
     const result = await provider.analyzeImage({
       dataUrl: imageToDataUrl(prepared),
@@ -64,6 +74,9 @@ export async function processDocument(
     return { text: truncateText(text, STORE_LIMIT), sourceType: 'txt', usedOcr: false }
   }
 
+  // PDF handling
+  const { extractPdfText, renderPdfPages } = await getPdfProcessor()
+
   let extracted: { text: string; pageCount: number }
   try {
     extracted = await extractPdfText(file.buffer)
@@ -81,10 +94,10 @@ export async function processDocument(
     }
   }
 
-  // Scanned PDF: OCR a bounded number of pages instead of sending the file to
-  // the model. If rendering is unavailable, keep any embedded text.
+  // Scanned PDF: OCR a bounded number of pages
   try {
     const pages = await renderPdfPages(file.buffer)
+    const { prepareImageForVision, imageToDataUrl } = await getImageProcessor()
     const ocrParts: string[] = []
     for (const page of pages) {
       const prepared = await prepareImageForVision(page)

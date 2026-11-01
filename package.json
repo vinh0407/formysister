@@ -5,17 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "NODE_OPTIONS=--no-deprecation next dev --port ${PORT:-3000} --hostname 0.0.0.0",
-    "build": "NODE_OPTIONS=--no-deprecation payload build",
+    "build": "NODE_OPTIONS=--no-deprecation next build",
     "start": "NODE_OPTIONS=--no-deprecation next start",
     "format": "oxfmt",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
-    "generate:importmap": "NODE_OPTIONS=--no-deprecation payload generate:importmap",
-    "generate:types": "NODE_OPTIONS=--no-deprecation payload generate:types",
-    "payload": "NODE_OPTIONS=--no-deprecation payload"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@payloadcms/figma": "1.0.0-beta.1",
