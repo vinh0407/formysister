@@ -294,8 +294,8 @@ export class CloudflareAIProvider implements AIProvider {
     ]
 
     const maxTokens = Math.min(
-      6000,
-      Math.max(3200, input.objectiveCount * 230 + input.essayCount * 480 + 900),
+      12000,
+      Math.max(3200, input.objectiveCount * 220 + input.essayCount * 450 + 900),
     )
 
     return this.chat({

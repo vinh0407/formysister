@@ -91,10 +91,10 @@ export async function POST(request: Request) {
     const sourceText = validateSourceText(
       typeof form.get('sourceText') === 'string' ? String(form.get('sourceText')) : '',
     )
-    const objectiveCount = clampInt(form.get('questionCount'), 1, 15, 10)
-    const essayCount = clampInt(form.get('essayCount'), 0, 5, 2)
-    if (objectiveCount + essayCount > 20) {
-      return fail('Tổng số câu hỏi không được vượt quá 20.', 400)
+    const objectiveCount = clampInt(form.get('questionCount'), 1, 50, 10)
+    const essayCount = clampInt(form.get('essayCount'), 0, 10, 2)
+    if (objectiveCount + essayCount > 60) {
+      return fail('Tổng số câu hỏi không được vượt quá 60.', 400)
     }
 
     const rawFile = form.get('file')

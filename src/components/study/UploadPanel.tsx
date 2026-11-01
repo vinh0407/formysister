@@ -67,6 +67,8 @@ export function UploadPanel({
   const [file, setFile] = useState<File | null>(null)
   const [sourceText, setSourceText] = useState('')
   const [questionCount, setQuestionCount] = useState(10)
+  const [isCustomCount, setIsCustomCount] = useState(false)
+  const [customInput, setCustomInput] = useState('')
   const [essayCount, setEssayCount] = useState(2)
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [mode, setMode] = useState<StudyMode>('learn')
@@ -262,23 +264,79 @@ export function UploadPanel({
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <fieldset>
-          <legend className="mb-2 text-sm font-bold text-slate-700">Số câu trắc nghiệm</legend>
-          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
-            {[5, 10, 15].map((count) => (
-              <button
-                type="button"
-                key={count}
-                onClick={() => setQuestionCount(count)}
-                aria-pressed={questionCount === count}
-                className={`flex-1 rounded-lg py-2 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 ${
-                  questionCount === count
-                    ? 'bg-white text-brand-700 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+          <div className="mb-2 flex items-center justify-between">
+            <legend className="text-sm font-bold text-slate-700">Số câu trắc nghiệm</legend>
+            <span className="text-xs font-semibold text-slate-500">Tối đa 50 câu</span>
+          </div>
+          <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
+            {[5, 10, 20, 50].map((count) => {
+              const isActive = questionCount === count && !isCustomCount
+              return (
+                <button
+                  type="button"
+                  key={count}
+                  onClick={() => {
+                    setQuestionCount(count)
+                    setIsCustomCount(false)
+                    setCustomInput('')
+                  }}
+                  aria-pressed={isActive}
+                  className={`flex-1 rounded-lg py-2 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 ${
+                    isActive
+                      ? 'bg-white text-brand-700 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {count}
+                </button>
+              )
+            })}
+            <div className="relative flex-1 min-w-[64px]">
+              <input
+                type="number"
+                min={1}
+                max={50}
+                placeholder="Tự nhập"
+                aria-label="Nhập số câu trắc nghiệm tùy chọn (1 đến 50)"
+                value={isCustomCount ? customInput : ''}
+                onFocus={() => {
+                  setIsCustomCount(true)
+                  if (!customInput) {
+                    setCustomInput(String(questionCount))
+                  }
+                }}
+                onChange={(e) => {
+                  const val = e.target.value
+                  setCustomInput(val)
+                  setIsCustomCount(true)
+                  if (val === '') return
+                  const num = parseInt(val, 10)
+                  if (!isNaN(num)) {
+                    const clamped = Math.min(50, Math.max(1, num))
+                    setQuestionCount(clamped)
+                  }
+                }}
+                onBlur={() => {
+                  if (customInput === '' || isNaN(parseInt(customInput, 10))) {
+                    setIsCustomCount(false)
+                    setCustomInput('')
+                    if (![5, 10, 20, 50].includes(questionCount)) {
+                      setQuestionCount(10)
+                    }
+                  } else {
+                    const num = Math.min(50, Math.max(1, parseInt(customInput, 10)))
+                    setCustomInput(String(num))
+                    setQuestionCount(num)
+                  }
+                }}
+                className={`w-full rounded-lg py-1.5 px-1.5 text-center text-sm font-bold transition outline-none ${
+                  isCustomCount
+                    ? 'bg-white text-brand-700 shadow-sm ring-2 ring-brand-500'
+                    : 'bg-transparent text-slate-600 placeholder:text-slate-400 hover:text-slate-900 hover:bg-white/50'
                 }`}
-              >
-                {count}
-              </button>
-            ))}
+                title="Nhập số câu trắc nghiệm (1 - 50)"
+              />
+            </div>
           </div>
         </fieldset>
 

@@ -18,7 +18,7 @@ const topLevelSchema = z.object({
   title: z.string().optional(),
   summary: z.string().optional(),
   difficulty: z.string().optional(),
-  questions: z.array(z.unknown()).min(1).max(30),
+  questions: z.array(z.unknown()).min(1).max(70),
 })
 
 const rawQuestionSchema = z.object({
