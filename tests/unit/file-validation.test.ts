@@ -131,6 +131,14 @@ describe('validateUpload', () => {
     const file = new File([Buffer.from('not a pdf')], 'fake.pdf', { type: 'application/pdf' })
     await expect(validateUpload(file)).rejects.toThrow(/PDF/)
   })
+
+  it('accepts a valid PDF with leading newline or alternate mime', async () => {
+    const validPdf = Buffer.from('\r\n%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\nxref\n0 2\ntrailer<</Root 1 0 R>>\nstartxref\n50\n%%EOF')
+    const file = new File([validPdf], 'doc.pdf', { type: 'application/octet-stream' })
+    const validated = await validateUpload(file)
+    expect(validated.category).toBe('pdf')
+    expect(validated.mimeType).toBe('application/pdf')
+  })
 })
 
 describe('validateSourceText', () => {

@@ -41,6 +41,19 @@ function initialTitle(filename: string | null, text: string): string {
   return (firstLine ?? 'Tài liệu học tập').slice(0, 120)
 }
 
+function isUploadFile(value: unknown): value is File {
+  return (
+    value instanceof File ||
+    (typeof value === 'object' &&
+      value !== null &&
+      'arrayBuffer' in value &&
+      typeof (value as Blob).arrayBuffer === 'function' &&
+      'size' in value &&
+      typeof (value as Blob).size === 'number' &&
+      (value as Blob).size > 0)
+  )
+}
+
 export async function POST(request: Request) {
   let materialId: string | null = null
 
@@ -101,7 +114,7 @@ export async function POST(request: Request) {
     }
 
     const rawFile = form.get('file')
-    const file = rawFile instanceof File && rawFile.size > 0 ? rawFile : null
+    const file = isUploadFile(rawFile) ? (rawFile as File) : null
     if (!file && !sourceText) {
       return fail('Hãy nhập nội dung bài học hoặc đính kèm một tài liệu, hình ảnh.', 400)
     }

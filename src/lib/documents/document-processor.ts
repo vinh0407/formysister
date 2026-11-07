@@ -85,7 +85,7 @@ export async function processDocument(
   }
 
   const textLength = extracted.text.replace(/--- Trang \d+ ---/g, '').trim().length
-  if (textLength >= 200) {
+  if (textLength >= 20) {
     return {
       text: truncateText(extracted.text, STORE_LIMIT),
       sourceType: 'pdf',
@@ -94,9 +94,23 @@ export async function processDocument(
     }
   }
 
-  // Scanned PDF: OCR a bounded number of pages
+  // Scanned PDF (text < 20 chars): attempt OCR on first pages if supported
   try {
     const pages = await renderPdfPages(file.buffer)
+    if (pages.length === 0) {
+      if (extracted.text.trim().length >= 10) {
+        return {
+          text: truncateText(extracted.text, STORE_LIMIT),
+          sourceType: 'pdf',
+          pageCount: extracted.pageCount,
+          usedOcr: false,
+        }
+      }
+      throw new DocumentProcessingError(
+        'PDF này không chứa lớp văn bản (có thể là bản scan). Vui lòng chuyển thành ảnh hoặc PDF có chứa văn bản.',
+      )
+    }
+
     const { prepareImageForVision, imageToDataUrl } = await getImageProcessor()
     const ocrParts: string[] = []
     for (const page of pages) {
@@ -122,7 +136,7 @@ export async function processDocument(
     }
   } catch (error) {
     if (error instanceof DocumentProcessingError) throw error
-    if (extracted.text.trim().length >= 20) {
+    if (extracted.text.trim().length >= 10) {
       return {
         text: truncateText(extracted.text, STORE_LIMIT),
         sourceType: 'pdf',
@@ -131,7 +145,7 @@ export async function processDocument(
       }
     }
     throw new DocumentProcessingError(
-      'Không thể OCR PDF scan trên máy chủ này. Hãy tải ảnh trang hoặc PDF có lớp văn bản.',
+      'Không thể xử lý PDF scan này. Hãy tải ảnh chụp trang hoặc PDF có chứa văn bản.',
     )
   }
 }

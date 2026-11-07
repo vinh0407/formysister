@@ -49,7 +49,8 @@ export function handleApiError(error: unknown, fallback = 'Đã có lỗi xảy 
     )
   }
   if (error instanceof SyntaxError || error instanceof TypeError) {
-    return fail('Dữ liệu gửi lên không hợp lệ.', 400)
+    console.error('[API:TypeError/SyntaxError]', error)
+    return fail(error.message || 'Dữ liệu gửi lên không hợp lệ.', 400)
   }
   console.error('[API]', error)
   return fail(fallback, 500)

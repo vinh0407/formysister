@@ -113,10 +113,18 @@ export async function validateUpload(file: File): Promise<ValidatedFile> {
     category = 'image'
     mimeType = detected.mime
   } else if (extension === 'pdf') {
-    if (declaredMime !== '' && declaredMime !== PDF_MIME) {
+    const isDeclaredPdf =
+      declaredMime === '' ||
+      declaredMime === PDF_MIME ||
+      declaredMime === 'application/x-pdf' ||
+      declaredMime === 'application/octet-stream' ||
+      declaredMime.includes('pdf')
+    if (!isDeclaredPdf) {
       throw new FileValidationError('Kiểu MIME của PDF không hợp lệ.')
     }
-    if (!detected || detected.mime !== PDF_MIME) {
+    const hasPdfMagic = buffer.subarray(0, 1024).includes(Buffer.from('%PDF-'))
+    const isDetectedPdf = detected?.mime === PDF_MIME || hasPdfMagic
+    if (!isDetectedPdf) {
       throw new FileValidationError('Tệp không phải PDF hợp lệ.')
     }
     category = 'pdf'
