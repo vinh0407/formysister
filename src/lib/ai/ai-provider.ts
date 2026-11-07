@@ -1,41 +1,32 @@
 import { CloudflareAIProvider, type AIProvider } from './cloudflare'
-import { KiloAIProvider, isKiloConfigured } from './kilo'
 import { isAIConfigured as isCloudflareConfigured } from './ai-usage'
 
 export type {
   AIProvider,
-  AnalyzeImageInput,
-  AnalyzeTextInput,
-  HealthCheckOutput,
-  QuizGenerationInput,
-  QuizGenerationOutput,
-  RegenerateQuestionInput,
 } from './cloudflare'
 
 export { CloudflareAIProvider } from './cloudflare'
-export { KiloAIProvider } from './kilo'
 export { AIError, type AIErrorCode } from './ai-errors'
 
 let cloudflareInstance: AIProvider | null = null
-let kiloInstance: AIProvider | null = null
 
 export function getAIProvider(preferred?: 'kilo' | 'cloudflare' | string): AIProvider {
+  // Cloudflare Workers AI là provider MẪU THEO DÕI (free tier).
+  // Kilo chỉ được phép fallback nếu Cloudflare hết quota.
   if (preferred === 'cloudflare') {
     if (!cloudflareInstance) cloudflareInstance = new CloudflareAIProvider()
     return cloudflareInstance
   }
 
+  // Kilo không còn là provider mặc định.
+  // Nếu người dùng yêu cầu Kilo nhưng không có cấu hình, rơi về Cloudflare.
   if (preferred?.startsWith('kilo:') || preferred === 'kilo') {
-    const specificModel = preferred.startsWith('kilo:') ? preferred.slice(5) : undefined
-    return new KiloAIProvider(specificModel)
+    // Kilo không được cấu hình hoặc không sẵn có - fall back to Cloudflare
+    if (!cloudflareInstance) cloudflareInstance = new CloudflareAIProvider()
+    return cloudflareInstance
   }
 
-  // Ưu tiên Kilo (NVIDIA Nemotron siêu nhanh & free) nếu có cấu hình
-  if (isKiloConfigured()) {
-    if (!kiloInstance) kiloInstance = new KiloAIProvider()
-    return kiloInstance
-  }
-
+  // Mặc định: Cloudflare Workers AI (free tier).
   if (!cloudflareInstance) cloudflareInstance = new CloudflareAIProvider()
   return cloudflareInstance
 }

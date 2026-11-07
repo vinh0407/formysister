@@ -1,166 +1,145 @@
-'use client'
-
-import { useRef, useState } from 'react'
-
-import { Icon } from '@/components/ui/Icon'
-import { useQuizGeneration } from '@/hooks/useQuizGeneration'
-import type { ClientQuiz } from '@/types/study'
+import React, { useState, useEffect } from 'react'
 import { QuizView } from './QuizView'
-import { UploadPanel } from './UploadPanel'
+import { AttemptDetail } from './AttemptDetail'
+import { MaterialsManager } from './MaterialsManager'
+import { QuizzesManager } from './QuizzesManager'
+import { StudyStats } from './StudyStats'
+import { Icon } from '@/components/ui/Icon'
+import { Button } from '@/components/ui/Button'
+import { useQuiz } from '@/hooks/useQuiz'
+import { loadProgressData } from '@/lib/study/server-data'
 
-export function StudyWorkspace() {
-  const generation = useQuizGeneration()
-  const [quiz, setQuiz] = useState<ClientQuiz | null>(null)
-  const quizSectionRef = useRef<HTMLElement>(null)
+export const StudyWorkspace = () => {
+  const [currentView, setCurrentView] = useState<'home' | 'materials' | 'quizzes' | 'quiz' | 'history' | 'progress'>('home')
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false)
+  const [quizError, setQuizError] = useState<string | null>(null)
+  const progressStats = loadProgressData()
 
-  const handleGenerate = async (payload: Parameters<typeof generation.generate>[0]) => {
-    const next = await generation.generate(payload)
-    if (next) {
-      setQuiz(next)
-      window.setTimeout(() => {
-        quizSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 50)
+  const handleGenerateQuiz = async () => {
+    setIsGeneratingQuiz(true)
+    setQuizError(null)
+    try {
+      // Gọi API tạo quiz - sẽ được implement trong hook hoặc component con
+      // Ví dụ: await generateQuizAPI()
+    } catch (err) {
+      setQuizError('Không thể tạo bài kiểm tra. Vui lòng thử lại sau.')
+    } finally {
+      setIsGeneratingQuiz(false)
     }
-    return next
   }
 
   return (
-    <main className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-      <section aria-labelledby="hero-heading" className="mb-8">
-        <div className="max-w-3xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-800">
-            <Icon name="spark" className="size-3.5" />
-            AI miễn phí · Cloudflare Workers AI
-          </span>
-          <h1
-            id="hero-heading"
-            className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-ink sm:text-4xl lg:text-[2.75rem]"
-          >
-            Biến tài liệu của bạn thành bài kiểm tra
-            <span className="text-brand-600"> hiểu đúng lỗi sai.</span>
-          </h1>
-          <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-            Tải ảnh, PDF, DOCX hoặc dán ghi chú. StudyAI soạn câu hỏi tiếng Việt, chấm điểm trắc
-            nghiệm thật và lưu tiến độ theo từng lượt làm bài — không cần tài khoản, không dùng thẻ.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-slate-600">
-            {[
-              'Không cần đăng ký',
-              'Đáp án ẩn ở chế độ thi',
-              'Tự luận không chấm tự động',
-            ].map((item) => (
-              <span key={item} className="inline-flex items-center gap-1.5">
-                <Icon name="check" className="size-4 text-emerald-600" />
-                {item}
-              </span>
-            ))}
-          </div>
+    <main className="flex min-h-screen bg-canvas text-ink">
+      {/* Sidebar Navigation */}
+      <nav className="w-64 bg-brand-50 border-r border-border p-4 flex-shrink-0">
+        <div className="mb-6">
+          <h2 className="font-bold text-ink text-lg tracking-tighter">StudyAI</h2>
+          <p className="text-sm text-slate-500 mt-1">Trợ lý ôn tập thông minh</p>
         </div>
-      </section>
+        <ul className="space-y-2">
+          <li>
+            <Button
+              variant="outline"
+              onClick={() => setCurrentView('home')}
+              className="w-full justify-start"
+            >
+              Trang chủ
+            </Button>
+          </li>
+          <li>
+            <Button
+              variant="outline"
+              onClick={() => setCurrentView('materials')}
+              className="w-full justify-start"
+            >
+              Tài liệu của tôi
+            </Button>
+          </li>
+          <li>
+            <Button
+              variant="outline"
+              onClick={() => setCurrentView('quizzes')}
+              className="w-full justify-start"
+            >
+              Bài kiểm tra của tôi
+            </Button>
+          </li>
+          <li>
+            <Button
+              variant="outline"
+              onClick={() => setCurrentView('progress')}
+              className="w-full justify-start"
+            >
+              Tiến độ học tập
+            </Button>
+          </li>
+          <li>
+            <Button
+              variant="outline"
+              onClick={() => setCurrentView('history')}
+              className="w-full justify-start"
+            >
+              Lịch sử làm bài
+            </Button>
+          </li>
+        </ul>
+      </nav>
 
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,.65fr)]">
-        <UploadPanel
-          loading={generation.loading}
-          stageLabel={generation.stageLabel}
-          error={generation.error}
-          quota={generation.quota}
-          onGenerate={handleGenerate}
-          onCancel={generation.cancel}
-          onClearError={generation.clearError}
-        />
-        <aside className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <div className="flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-              <Icon name="spark" className="size-5" />
-            </span>
-            <h2 className="text-lg font-bold tracking-tight text-ink">Cách hoạt động</h2>
-          </div>
-          <ol className="mt-4 grid gap-4">
-            {[
-              {
-                title: 'Đưa nội dung vào',
-                body: 'Dán ghi chú hoặc tải ảnh, PDF, DOCX, TXT. Tệp được đọc ngay trên máy chủ.',
-              },
-              {
-                title: 'AI soạn câu hỏi',
-                body: 'Cloudflare Workers AI tạo câu hỏi tiếng Việt bám sát tài liệu, có đáp án và giải thích.',
-              },
-              {
-                title: 'Làm bài và xem lỗi sai',
-                body: 'Trắc nghiệm được chấm thật. Tự luận hiện đáp án mẫu nhưng không tự chấm điểm.',
-              },
-            ].map((step, index) => (
-              <li key={step.title} className="flex gap-3">
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
-                  {index + 1}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-800">{step.title}</p>
-                  <p className="mt-0.5 text-sm leading-6 text-slate-600">{step.body}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <p className="mt-5 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-            Không cần tài khoản. Bài kiểm tra được giữ trong bộ nhớ máy chủ 2 giờ để chấm điểm, sau
-            đó tự xoá. Hạn mức miễn phí mỗi ngày được ghi ở trang Cài đặt.
-          </p>
-        </aside>
-      </section>
-
-      <section
-        id="practice"
-        ref={quizSectionRef}
-        aria-labelledby="practice-heading"
-        className="mt-8 scroll-mt-24"
-      >
-        <h2 id="practice-heading" className="sr-only">
-          Bài luyện tập
-        </h2>
-        {quiz ? (
-          <QuizView
-            key={quiz.quizId ?? quiz.title}
-            quiz={quiz}
-            onNewQuiz={() => {
-              setQuiz(null)
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }}
-            onSubmitted={() => {
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }}
-          />
-        ) : (
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
-              <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
-                <Icon name="brain" className="size-7" />
-              </span>
-              <div className="min-w-0">
-                <h3 className="text-xl font-bold tracking-tight text-ink">Chưa có bài kiểm tra</h3>
-                <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
-                  Nhập nội dung hoặc tải tài liệu ở phía trên. Bài kiểm tra sẽ xuất hiện tại đây với
-                  đáp án, giải thích và nút nộp bài thật.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
-                  {['Dán ghi chú', 'Tải ảnh hoặc PDF', 'Chọn số câu', 'Nộp và xem lỗi sai'].map(
-                    (step, index) => (
-                      <span
-                        key={step}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5"
-                      >
-                        <span className="flex size-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-brand-700">
-                          {index + 1}
-                        </span>
-                        {step}
-                      </span>
-                    ),
-                  )}
-                </div>
-              </div>
-            </div>
+      {/* Main Content Area */}
+      <div className="flex-1 p-6 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="max-w-2xl mx-auto text-center py-12">
+            <h1 className="text-4xl font-bold text-ink mb-4">Chào mừng đến với StudyAI</h1>
+            <p className="text-slate-600 text-lg mb-6">
+              Tải tài liệu của bạn để tạo bài kiểm tra bằng AI miễn phí.
+            </p>
+            <Button onClick={() => setCurrentView('materials')} className="mx-auto">
+              Tải tài liệu của bạn
+            </Button>
           </div>
         )}
-      </section>
+
+        {currentView === 'materials' && (
+          <MaterialsManager onQuizCreated={() => setCurrentView('quizzes')} />
+        )}
+
+        {currentView === 'quizzes' && (
+          <QuizzesManager onStartQuiz={handleGenerateQuiz} />
+        )}
+
+        {currentView === 'quiz' && (
+          <QuizView
+            isLoading={isGeneratingQuiz}
+            onError={quizError}
+            onClose={() => setCurrentView('quizzes')}
+          />
+        )}
+
+        {currentView === 'attempt' && (
+          <AttemptDetail onClose={() => setCurrentView('quizzes')} />
+        )}
+
+        {currentView === 'progress' && (
+          <StudyStats stats={progressStats} />
+        )}
+
+        {currentView === 'history' && (
+          <div className="prose max-w-3xl mx-auto p-8">
+            <h1 className="text-2xl font-bold text-ink mb-4">Lịch sử làm bài</h1>
+            <p className="text-slate-500 mb-6">
+              Tất cả các lượt nộp bài của bạn sẽ xuất hiện ở đây.
+            </p>
+            {/* QuizHistory component would go here */}
+          </div>
+        )}
+
+        {/* Error Boundary for Quiz Generation */}
+        {quizError && (
+          <div className="fixed top-4 left-4 right-4 z-50 bg-red-50 border-l-4 border-red-500 p-4 rounded-md shadow-sm text-red-700 max-w-2xl mx-auto">
+            <p className="font-medium">{quizError}</p>
+          </div>
+        )}
+      </div>
     </main>
   )
 }

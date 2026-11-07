@@ -1,68 +1,61 @@
-'use client'
+import React from 'react'
+import { Button } from '@/components/ui/Button'
 
-import { Icon } from '@/components/ui/Icon'
-import type { QuizQuestion } from '@/types/study'
+interface MultipleChoiceQuestionProps {
+  question: any
+  onAnswer: (isCorrect: boolean) => void
+  isLast?: boolean
+}
 
-export function MultipleChoiceQuestion({
+export const MultipleChoiceQuestion = ({
   question,
-  selected,
-  revealed,
-  locked,
-  onSelect,
-}: {
-  question: QuizQuestion
-  selected: string
-  revealed: { answer?: string; isCorrect?: boolean | null } | null
-  locked: boolean
-  onSelect: (answer: string) => void
-}) {
-  const options = question.options ?? []
+  onAnswer,
+  isLast = false
+}: MultipleChoiceQuestionProps) => {
+  const handleSelect = (isCorrect: boolean) => {
+    onAnswer(isCorrect)
+    // Tự động chuyển câu hỏi nếu không phải câu cuối hoặc có thể thêm logic next
+    if (!isLast) {
+      // Tạm thời gọi onAnswer, component cha có thể xử lý navigation
+    }
+  }
+
+  if (!question || !question.options) {
+    return null
+  }
 
   return (
-    <div role="group" aria-labelledby={`question-${question.id}-text`} className="grid gap-2 sm:grid-cols-2">
-      {options.map((option, optionIndex) => {
-        const isSelected = selected === option
-        const isCorrect = revealed ? option === revealed.answer : false
-        const isWrong = Boolean(revealed && isSelected && !isCorrect)
-        return (
-          <button
-            key={`${question.id}-${optionIndex}`}
-            type="button"
-            onClick={() => onSelect(option)}
-            disabled={locked}
-            aria-pressed={isSelected}
-            className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-left text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed ${
-              isCorrect
-                ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
-                : isWrong
-                  ? 'border-rose-300 bg-rose-50 text-rose-800'
-                  : isSelected
-                    ? 'border-brand-500 bg-brand-50 text-brand-900'
-                    : 'border-slate-200 text-slate-700 hover:border-brand-300 hover:bg-slate-50'
-            }`}
-          >
-            <span
-              className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
-                isCorrect
-                  ? 'border-emerald-600 bg-emerald-600 text-white'
-                  : isWrong
-                    ? 'border-rose-600 bg-rose-600 text-white'
-                    : 'border-slate-300 text-slate-600'
-              }`}
-              aria-hidden="true"
-            >
-              {isCorrect ? (
-                <Icon name="check" className="size-3.5" />
-              ) : (
-                String.fromCharCode(65 + optionIndex)
-              )}
+    <div className="space-y-2">
+      <p className="text-lg font-medium text-ink mb-4 line-clamp-3">
+        {question.text}
+      </p>
+
+      {question.options.map((option: any) => (
+        <Button
+          key={option.id}
+          variant="outline"
+          onClick={() => handleSelect(option.isCorrect)}
+          className="w-full justify-start px-4 py-2 rounded-md text-left border border-border hover:bg-brand-50 transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <span className="size-3 rounded-full {option.isCorrect ? 'bg-brand-600' : 'bg-transparent'} mr-2">
+              {/* Icon check hoặc circle */}
             </span>
-            <span className="min-w-0 flex-1 leading-6">{option}</span>
-            {isCorrect ? <span className="sr-only">Đáp án đúng</span> : null}
-            {isWrong ? <span className="sr-only">Đáp án bạn chọn chưa đúng</span> : null}
-          </button>
-        )
-      })}
+            {option.text}
+          </span>
+        </Button>
+      ))}
+
+      {isLast && (
+        <Button
+          variant="primary"
+          onClick={() => {}}
+          className="w-full mt-4"
+          disabled={/* loading state */}
+        >
+          Hoàn thành bài kiểm tra
+        </Button>
+      )}
     </div>
   )
 }
